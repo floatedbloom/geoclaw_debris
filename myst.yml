@@ -1,0 +1,30 @@
+version: 1
+project:
+  title: GeoClaw Debris
+  copyright: '2025'
+  github: rjleveque/geoclaw_debris
+  bibliography:
+    - docs/references.bib
+  exports:
+    - format: pdf
+      template: plain_latex_book
+      output: exports/geoclaw_debris.pdf
+  toc:
+    - file: index.md
+    - title: Overview and introduction
+      children:
+        - file: index.md
+        - file: docs/python_env.md
+        - file: docs/Test.ipynb
+        - file: docs/possible_projects.md
+    - title: Resources
+      children:
+        - file: docs/intro_resources.md
+        - file: docs/jupyter_book.md
+        - file: docs/biblio.md
+site:
+  options:
+    logo: images/GeoClawLogoTitle.jpg
+    favicon: images/geoclaw-favicon-32x32.png
+    folders: true
+  template: book-theme
