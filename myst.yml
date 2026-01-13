@@ -15,8 +15,10 @@ project:
       children:
         - file: index.md
         - file: docs/python_env.md
-        - file: docs/Test.ipynb
         - file: docs/possible_projects.md
+    - title: Experiments
+      children:
+        - file: src/geoclaw_debris/Test1.ipynb
     - title: Resources
       children:
         - file: docs/intro_resources.md

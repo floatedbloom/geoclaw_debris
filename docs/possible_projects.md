@@ -10,9 +10,10 @@ fluid velocity (as modified to satisfy constraints of fixed shape and
 non-overlapping).
 
 The code in `src/geoclaw_debris/debris_tracking.py` should be further tested
-and improved, e.g.
+and improved.  Some possible tests:
 
-- Try a time-dependent velocity field, e.g. for the swirling flow use
+- Try a time-dependent velocity field, e.g. for the swirling flow shown
+  in the [Test1 notebook](../src/geoclaw_debris/Test1), try
 
         u = lambda x,y,t: -2*sin(pi*y)*cos(pi*y)*sin(pi*x)**2 * cos(2*pi*t / 4)
         v = lambda x,y,t: 2*sin(pi*x)*cos(pi*x)*sin(pi*y)**2 * cos(2*pi*t / 4)
@@ -22,8 +23,8 @@ and improved, e.g.
   example](https://www.clawpack.org/gallery/_static/amrclaw/examples/advection_2d_swirl/_plots/_PlotIndex.html).
 
 - Experiment with other analytic velocity fields.  Note that a nice way
-  to determine a divergence-free velocity field (as expected for an
-  incompressible fluid that is moving with a flat surface) is by using
+  to determine a divergence-free velocity field (e.g. an
+  incompressible fluid with a uniform depth) is by using
   a stream function $\psi(x,y)$  chosen so that contours of $\psi$ are the
   desired streamlines of the flow.  Then set
 
@@ -33,7 +34,7 @@ and improved, e.g.
     v &= \psi_x
   \end{split}
   \end{equation}
-  so that $u_x + v_y = 0$. The swirling velocity was obtained this way from
+  so that $u_x + v_y = 0$. The swirling flow velocity was obtained this way from
   the stream function
   $$\psi(x,y) = (\sin^2(\pi x) + \sin^2(\pi y)) / \pi. $$
   Note that $\psi(x,y) = 0$ for $x$ or $y$ equal to 0 or 1, so the
@@ -50,8 +51,8 @@ and improved, e.g.
 
   - Time-dependent flow field captured using fgout frames.
 
-The least squares approach used to remap vertices to enforce shapes
-and non-overlapping conditions works ok in simple cases but could be
+The least squares approach used to remap vertices (to enforce fixed shapes
+and non-overlapping conditions) works ok in simple cases but could be
 improved, and may break down with more objects.
 
 With lots of objects it may be too slow and perhaps there are better
@@ -64,7 +65,8 @@ difference in speed between the debris and the fluid.  Some drag factor has
 to be included in this that ideally would be based on the shape of the
 debris and its orientation relative to the flow.
 
-A first attempt at this is included in the code but probably needs improvement.
+A first attempt at this is included in the code, but needs more testing
+and validation and probably needs improving.
 
 ### Adding bottom friction
 
@@ -78,7 +80,7 @@ to be floating, but more generally we should include both:
 - dynamic friction, if the object is moving but touching the bottom, then
   there is a bottom drag term that must be included.
 
-A first attempt at this is included in the code but probably needs improvement.
+A first attempt at this is included in the code, but probably needs improvement.
 
 ### More complex examples
 
@@ -96,7 +98,10 @@ problems to track single point particles, either with passive advection or
 with the addition of mass and a grounding depth (but no static or dynamic
 friction).
 
-Examples:
+This code needs to be cleaned up, and perhaps combined more directly with
+the code in `debris_tracking.py` (which was written more recently).
+
+Examples from past work:
   - Modeling a tsunami at Nu'u in Hawaii,
     [figures and animations](https://faculty.washington.edu/rjl/pubs/NuuRefugeTsunami/index.html)
   - [Westport, WA maritime study](https://depts.washington.edu/ptha/debris/particle_tracking.html)
@@ -111,8 +116,14 @@ avoidance algorithm for large ships (e.g. Bainbridge Island ferry).
 
 ## Modeling large sets of particles with a continuum density function
 
-For large sets of particles (e.g. in Seaside study of Park, Cox et al.)
+For large sets of particles (e.g. in the Seaside study of
+https://doi.org/10.1016/j.coastaleng.2019.103541)
 it would be interesting to compare tracking individual particles with using
 the velocity field to solve an advection equation for the density of debris
 (e.g. doing a simulation like the Clawpack advection with swirling flow example
 cited above, but with the velocity field coming from a tsunami simulation).
+
+In fact it might be interesting to put lots of particles in the swirling flow
+velocity field and see how that compares to the advected density shown in the
+Clawpack [`advection_2d_swirl`
+example](https://www.clawpack.org/gallery/_static/amrclaw/examples/advection_2d_swirl/_plots/_PlotIndex.html).
