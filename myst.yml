@@ -15,8 +15,10 @@ project:
       children:
         - file: docs/python_environment.md
         - file: docs/possible_projects.md
-    - title: Experiments
+    - title: Examples
       children:
+        - file: examples/intro_examples.md
+        - file: examples/flow_around_cylinder/DebrisCylinder.ipynb
         - file: src/geoclaw_debris/Test1.ipynb
     - title: Resources
       children:
