@@ -13,8 +13,7 @@ project:
     - file: index.md
     - title: Overview and introduction
       children:
-        - file: index.md
-        - file: docs/python_env.md
+        - file: docs/python_environment.md
         - file: docs/possible_projects.md
     - title: Experiments
       children:
@@ -22,7 +21,6 @@ project:
     - title: Resources
       children:
         - file: docs/intro_resources.md
-        - file: docs/jupyter_book.md
         - file: docs/biblio.md
 site:
   options:
