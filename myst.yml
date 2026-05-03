@@ -15,11 +15,18 @@ project:
       children:
         - file: docs/python_environment.md
         - file: docs/possible_projects.md
-    - title: Examples
+    - file: examples/intro_examples.md
       children:
-        - file: examples/intro_examples.md
-        - file: examples/flow_around_cylinder/DebrisCylinder.ipynb
-        - file: src/geoclaw_debris/Test1.ipynb
+        - title: Particles without collision avoidance
+          children:
+            - file: examples/particles.md
+        - title: Large objects, avoiding collisions
+          children:
+            - file: src/geoclaw_debris/Test1.ipynb
+            - file: examples/flow_around_cylinder/DebrisCylinder.ipynb
+            - file: examples/wavetank1/README.md
+              children:
+                - file: examples/wavetank1/wavetank1_obstacles.ipynb
     - title: Resources
       children:
         - file: docs/intro_resources.md
