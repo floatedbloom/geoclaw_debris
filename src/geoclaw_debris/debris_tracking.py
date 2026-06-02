@@ -7,6 +7,7 @@ Includes interaction between debris Objects and/or with obstacles and walls.
 from pylab import *
 import shapely
 
+h_min = 1e-2 # min depth below which considered grounded
 
 class DebrisObject():
 
@@ -227,12 +228,12 @@ def make_debris_path_list(debris_list, z0_list, obst_list, domain,
 
             friction = 'no'
             stol = 1e-3
-            if h_ave < debris.draft:
+            if h_ave < debris.draft or h_ave < h_min: # add minimum water level for grounding too
                 if abs(uc_n).max() + abs(vc_n).max() < stol:
                     # corner velocities at t_n were all zero, check static friction:
                     friction = 'static'
                 else:
-                    friction = 'kinetic'
+                    friction = 'kinetic' # right now kinetic friction is just instant stop same as static in advect mode
 
             if friction == 'static' and debris.friction_static == 0.:
                 friction = 'no'
@@ -280,7 +281,7 @@ def make_debris_path_list(debris_list, z0_list, obst_list, domain,
                 #print('+++ k = %i, uk_f = %.3f  vk_f = %.3f' % (k,uk_f,vk_f))
                 if isnan(uk_fluid):
                     print('*** uk_fluid is nan at ', xk_n, yk_n, t_n)
-                    import pdb; pdb.set_trace()
+                    continue # make corner stop moving if it goes out of bounds
 
                 if debris.advect:
                     if friction == 'no':
