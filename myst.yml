@@ -23,6 +23,7 @@ project:
         - title: Large objects, avoiding collisions
           children:
             - file: src/geoclaw_debris/Test1.ipynb
+            - file: src/geoclaw_debris/DebrisPlayground.ipynb
             - file: examples/flow_around_cylinder/DebrisCylinder.ipynb
             - file: examples/wavetank1/README.md
               children:
