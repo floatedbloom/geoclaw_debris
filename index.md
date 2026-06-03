@@ -18,6 +18,3 @@ For large debris objects, adding constraints that they do not overlap with
 each other or with obstacles in the flow is also possible, but becomes
 time-consuming for more than a few objects. This is still work in progress.
 
-Some initial experiments can be viewed on the webpages built using
-Jupyter Book, <https://geoclaw.org/geoclaw_debris/>.
-

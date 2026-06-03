@@ -48,6 +48,8 @@ and improved.  Some possible tests:
   - Wavetank simulation with some stationary obstacles as part of the topo,
     with inflow/outflow boundary conditions so the flow reaches a steady
     state.
+  
+    **Update:** See [](wavetank1_README).
 
   - Time-dependent flow field captured using fgout frames.
 
@@ -89,6 +91,10 @@ A first attempt at this is included in the code, but probably needs improvement.
   (e.g. large buildings or bridge piers).
 
 - Examples from the [NTHMP Tsunami Debris workshop](http://tsunamiworkshop.org).
+  Some initial work on these problems using GeoClaw was presented at the
+  workshop in 2023.  Some code is available [in this
+  repo](https://github.com/rjleveque/tsunami_benchmarks/tree/master/nthmp_debris_2023)
+  but does not use the tools developed more recently for tracking large debris.  
 
 ## Tracking large sets of point particles
 
