@@ -431,12 +431,6 @@ def remap_avoid(xc_hat_list, yc_hat_list, debris_list, z_guess_list,
 
     from scipy.optimize import least_squares
 
-    # create a list z_guess_all by catenating all the 3-element z_guess lists
-    # together, so len(z_guess_all) = 3*len(z_guess_list):
-    z_guess_all = z_guess_list[0]
-    for dbno in range(1, len(z_guess_list)):
-        z_guess_all = z_guess_all + z_guess_list[dbno]
-
     def F(z_all, *args, **kwargs):
         """
         Objective function for least squares fitting
@@ -502,7 +496,7 @@ def remap_avoid(xc_hat_list, yc_hat_list, debris_list, z_guess_list,
                 z2 = z_all[3*dbno2:3*dbno2+3]
                 xc2,yc2 = debris2.get_corners(z2)
                 #print('+++ dbno2 = %i, z2 = %s' % (dbno2,z2))
-                debris2_polygon = shapely.Polygon(fliplr(vstack((xc2,yc2))).T)
+                debris2_polygon = shapely.Polygon(vstack((xc2,yc2)).T)
                 debris2_xcentroid = debris2_polygon.centroid.x
                 debris2_ycentroid = debris2_polygon.centroid.y
                 if sqrt((debris_xcentroid - debris2_xcentroid)**2 + \

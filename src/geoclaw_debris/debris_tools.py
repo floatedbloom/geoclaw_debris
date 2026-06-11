@@ -404,8 +404,8 @@ def get_dbAB(t, debris_paths, dbnosA, dbnosB):
     return xdAB, ydAB as arrays of the pairs of endpoints separated by nan's
     so that a single plot command can plot all pairs.
     """
-    xA = get_debris_xy(t, debris_paths, dbnosA)
-    xB = get_debris_xy(t, debris_paths, dbnosB)
+    xA,yA = get_debris_xy(t, debris_paths, dbnosA)
+    xB,yB = get_debris_xy(t, debris_paths, dbnosB)
     xdAB = []
     ydAB = []
     
@@ -430,7 +430,7 @@ def get_dbAB_old(t, debris_paths, dbnosA, dbnosB):
         try:
             j = where(abs(dbA[:,0]-t) < 1e-6)[0].max()
         except:
-            print('Did not find path for dbno=%i at t = %.3f' % (dbno,t))
+            print('Did not find path for dbnoA=%i at t = %.3f' % (dbnoA,t))
             j = -1
         if j > -1:
             xA = dbA[j,1]
