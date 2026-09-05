@@ -2,3 +2,15 @@
 ideas.md
 thoughts.md
 wavetank1_fgout_frames.nc
+*.data
+*.o
+*.mod
+xgeoclaw
+_output/
+_plots/
+pyclaw.log
+.output
+.data
+*.tt1
+*.tt3
+*.nc
