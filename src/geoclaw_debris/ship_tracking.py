@@ -69,8 +69,7 @@ def check_pose(flow, buildings_utm, ship, center, heading, t):
     if hull_polygon(center, heading, ship).intersects(buildings_utm): return False, 'building contact', depth
     return True, 'clear', depth
 
-def simulate(flow, buildings_lonlat, ship, start_lonlat, heading_deg=0., start_time=0., end_time=600., dt=1., contact_mode='stop'):
-    """Track a ship, optionally sliding along buildings after contact."""
+def simulate(flow, buildings_lonlat, ship, start_lonlat, heading_deg=0., start_time=0., end_time=600., dt=1., contact_mode='slide'):
     if dt <= 0 or end_time <= start_time or not np.isclose((end_time-start_time)/dt, round((end_time-start_time)/dt)): raise ValueError('choose a positive dt that divides the time span')
     if min(ship.length_m, ship.beam_m, ship.draft_m, ship.mass_kg) <= 0: raise ValueError('ship dimensions and mass must be positive')
     if contact_mode not in ('stop', 'slide'): raise ValueError('contact_mode must be stop or slide')
