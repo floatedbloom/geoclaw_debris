@@ -70,27 +70,33 @@ def check_pose(flow, buildings_utm, ship, center, heading, t):
     if buildings_utm.intersects(hull_polygon(center, heading, ship)): return False, 'building contact', depth
     return True, 'clear', depth
 
-def simulate(flow, buildings_lonlat, ship, start_lonlat, heading_deg=0., start_time=0., end_time=600., dt=1., contact_mode='slide'):
+def _simulate(flow, buildings_lonlat, ship, start_lonlat, path, heading_deg=0., start_time=0., end_time=600., dt=1., contact_mode='slide'):
     if dt <= 0 or end_time <= start_time or not np.isclose((end_time-start_time)/dt, round((end_time-start_time)/dt)): raise ValueError('choose a positive dt that divides the time span')
+    if start_time < flow.times[0] or end_time > flow.times[-1]: raise ValueError('time is outside the flow record')
     if min(ship.length_m, ship.beam_m, ship.draft_m, ship.mass_kg) <= 0: raise ValueError('ship dimensions and mass must be positive')
     if contact_mode not in ('stop', 'slide'): raise ValueError('contact_mode must be stop or slide')
 
     buildings = transform(flow.to_xy, buildings_lonlat)
-    # Reuse a spatial index for the many hull/obstacle checks in a fleet run.
+    # reuse the building index
     building_contacts = prep(buildings)
     center = np.array(flow.to_xy(*start_lonlat), dtype=float)
     heading = np.deg2rad(heading_deg)
     velocity = np.zeros(2)
     yaw_rate = 0.
-    path = []
     stopped = None
     contact_state = 'afloat'
+    swept = hull_polygon(center, heading, ship)
 
-    for t in np.arange(start_time, end_time+dt/2., dt):
+    for t in np.linspace(start_time, end_time, round((end_time-start_time)/dt)+1):
+        # let the fleet correct contact before recording this step
+        state = [center.copy(), heading, velocity.copy(), yaw_rate, stopped, contact_state]
+        yield state, swept
+        center, heading, velocity, yaw_rate, stopped, contact_state = state
         clear, reason, depth = check_pose(flow, building_contacts, ship, center, heading, t)
         if not clear and stopped is None: raise ValueError(f'invalid ship pose at t={t}: {reason}')
         path.append({'time_s': float(t), 'x_m': float(center[0]), 'y_m': float(center[1]), 'heading_deg': float(np.rad2deg(heading)), 'u_mps': float(velocity[0]), 'v_mps': float(velocity[1]), 'min_depth_m': depth, 'status': stopped or contact_state})
         contact_state = 'afloat'
+        swept = hull_polygon(center, heading, ship)
         if t >= end_time or stopped: continue
 
         points = hull_points(center, heading, ship)
@@ -124,10 +130,12 @@ def simulate(flow, buildings_lonlat, ship, start_lonlat, heading_deg=0., start_t
 
         valid, reason, position, angle = try_step(1.)
         if valid:
+            swept = _swept_hull(ship, (center, heading), (position, angle))
             center, heading = position, angle
             velocity, yaw_rate = next_velocity, next_yaw_rate
             continue
         initial_center = center.copy()
+        initial_heading = heading
         low, high = 0., 1.
         for _ in range(24): # binary search for how far the ship can go without collision/grounding
             fraction = (low+high)/2.
@@ -135,6 +143,7 @@ def simulate(flow, buildings_lonlat, ship, start_lonlat, heading_deg=0., start_t
             if valid: low = fraction
             else: high = fraction
         _, _, center, heading = try_step(low)
+        swept = _swept_hull(ship, (initial_center, initial_heading), (center, heading))
         # slide ship along wall when it hits instead of simply stopping
         if contact_mode == 'slide' and reason in ('building contact', 'clear'):
             hull = hull_polygon(center, heading, ship)
@@ -171,6 +180,7 @@ def simulate(flow, buildings_lonlat, ship, start_lonlat, heading_deg=0., start_t
                     if try_slide(fraction): slide_low = fraction
                     else: slide_high = fraction
                 center = contact_center + slide_low*along_wall
+            swept = swept.union(_swept_hull(ship, (contact_center, heading), (center, heading)))
             velocity = (center-initial_center)/dt
             yaw_rate = 0.
             contact_state = 'sliding' if np.linalg.norm(center-contact_center) > 1.e-3 else 'blocked'
@@ -178,4 +188,55 @@ def simulate(flow, buildings_lonlat, ship, start_lonlat, heading_deg=0., start_t
             velocity[:] = 0.
             yaw_rate = 0.
             stopped = reason if reason != 'clear' else 'building contact'
+
+
+def _swept_hull(ship, before, after):
+    # the sapce a hull will travel through during a step
+    center, heading = before[:2]
+    next_center, next_heading = after[:2]
+    points = np.vstack((hull_points(center, heading, ship), hull_points(next_center, next_heading, ship)))
+    swept = MultiPoint(points).convex_hull
+    radius = np.hypot(ship.length_m, ship.beam_m)/2.
+    padding = radius*(1-np.cos(min(abs(next_heading-heading), 2*np.pi)/2.))
+    return swept.buffer(padding/np.cos(np.pi/64)) if padding > 0 else swept
+
+
+def simulate_fleet(flow, buildings_lonlat, ships, starts, heading_deg=0., start_time=0., end_time=600., dt=1., contact_mode='slide', collisions=True):
+    #advance all ships at once and include collision handling
+    if not ships or len(ships) != len(starts): raise ValueError('provide one start for each ship')
+    headings = np.broadcast_to(heading_deg, (len(ships),))
+    paths = [[] for _ in ships]
+    tracks = [_simulate(flow, buildings_lonlat, ship, start, path, heading, start_time, end_time, dt, contact_mode) for ship, start, path, heading in zip(ships, starts, paths, headings)]
+    # start each ship's simulation and check its inputs
+    advances = [next(track) for track in tracks]
+    obstacles = prep(transform(flow.to_xy, buildings_lonlat))
+    previous = None
+    for t in np.linspace(start_time, end_time, round((end_time-start_time)/dt)+1):
+        states = [state for state, swept in advances]
+        swept = [swept for state, swept in advances]
+        if collisions and previous is None:
+            if any(swept[i].intersects(swept[j]) for i in range(len(ships)) for j in range(i)): raise ValueError('starting ships overlap or touch')
+        elif collisions:
+            rejected = set()
+            while True:
+                contacts = set()
+                for i in range(len(ships)):
+                    for j in range(i): 
+                        if swept[i].intersects(swept[j]): contacts.update((i, j))
+                contacts -= rejected
+                if not contacts: break
+                for k in contacts:
+                    center, heading, _, _, stopped, _ = previous[k]
+                    clear, reason, _ = check_pose(flow, obstacles, ships[k], center, heading, t)
+                    if not clear: stopped = stopped or reason
+                    states[k][:] = [center.copy(), heading, np.zeros(2), 0., stopped, 'ship contact']
+                    swept[k] = hull_polygon(center, heading, ships[k])
+                rejected.update(contacts)
+        previous = [state.copy() for state in states]
+        advances = [next(track, None) for track in tracks]
+    return paths
+
+def simulate(flow, buildings_lonlat, ship, start_lonlat, heading_deg=0., start_time=0., end_time=600., dt=1., contact_mode='slide'):
+    path = []
+    for _ in _simulate(flow, buildings_lonlat, ship, start_lonlat, path, heading_deg, start_time, end_time, dt, contact_mode): pass
     return path
